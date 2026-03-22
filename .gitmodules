@@ -1,0 +1,36 @@
+[submodule ".vim/pack/global/start/vim-commentary"]
+	path = .vim/pack/global/start/vim-commentary
+	url = https://github.com/tpope/vim-commentary
+[submodule ".vim/pack/global/start/vim-eslint-compiler"]
+	path = .vim/pack/global/start/vim-eslint-compiler
+	url = https://github.com/salomvary/vim-eslint-compiler.git
+[submodule ".vim/pack/global/start/vim-fugitive"]
+	path = .vim/pack/global/start/vim-fugitive
+	url = https://github.com/tpope/vim-fugitive.git
+[submodule ".vim/pack/global/start/vim-grepper"]
+	path = .vim/pack/global/start/vim-grepper
+	url = https://github.com/mhinz/vim-grepper.git
+[submodule ".vim/pack/global/start/vim-lsc"]
+	path = .vim/pack/global/start/vim-lsc
+	url = https://github.com/natebosch/vim-lsc.git
+[submodule ".vim/pack/global/start/vim-signify"]
+	path = .vim/pack/global/start/vim-signify
+	url = https://github.com/mhinz/vim-signify.git
+[submodule ".local/share/nvim/pack/global/start/opencode.nvim"]
+	path = .local/share/nvim/pack/global/start/opencode.nvim
+	url = https://github.com/nickjvandyke/opencode.nvim.git
+[submodule ".local/share/nvim/pack/global/start/plenary.nvim"]
+	path = .local/share/nvim/pack/global/start/plenary.nvim
+	url = https://github.com/nvim-lua/plenary.nvim.git
+[submodule ".local/share/nvim/pack/global/start/snacks.nvim"]
+	path = .local/share/nvim/pack/global/start/snacks.nvim
+	url = https://github.com/folke/snacks.nvim.git
+[submodule ".local/share/nvim/pack/global/start/telescope-fzf-native.nvim"]
+	path = .local/share/nvim/pack/global/start/telescope-fzf-native.nvim
+	url = https://github.com/nvim-telescope/telescope-fzf-native.nvim.git
+[submodule ".local/share/nvim/pack/global/start/telescope.nvim"]
+	path = .local/share/nvim/pack/global/start/telescope.nvim
+	url = https://github.com/nvim-telescope/telescope.nvim.git
+[submodule ".local/share/nvim/pack/global/start/tokyonight.nvim"]
+	path = .local/share/nvim/pack/global/start/tokyonight.nvim
+	url = https://github.com/folke/tokyonight.nvim.git
