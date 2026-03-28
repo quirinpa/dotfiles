@@ -16,21 +16,3 @@
 [submodule ".vim/pack/global/start/vim-signify"]
 	path = .vim/pack/global/start/vim-signify
 	url = https://github.com/mhinz/vim-signify.git
-[submodule ".local/share/nvim/pack/global/start/opencode.nvim"]
-	path = .local/share/nvim/pack/global/start/opencode.nvim
-	url = https://github.com/nickjvandyke/opencode.nvim.git
-[submodule ".local/share/nvim/pack/global/start/plenary.nvim"]
-	path = .local/share/nvim/pack/global/start/plenary.nvim
-	url = https://github.com/nvim-lua/plenary.nvim.git
-[submodule ".local/share/nvim/pack/global/start/snacks.nvim"]
-	path = .local/share/nvim/pack/global/start/snacks.nvim
-	url = https://github.com/folke/snacks.nvim.git
-[submodule ".local/share/nvim/pack/global/start/telescope-fzf-native.nvim"]
-	path = .local/share/nvim/pack/global/start/telescope-fzf-native.nvim
-	url = https://github.com/nvim-telescope/telescope-fzf-native.nvim.git
-[submodule ".local/share/nvim/pack/global/start/telescope.nvim"]
-	path = .local/share/nvim/pack/global/start/telescope.nvim
-	url = https://github.com/nvim-telescope/telescope.nvim.git
-[submodule ".local/share/nvim/pack/global/start/tokyonight.nvim"]
-	path = .local/share/nvim/pack/global/start/tokyonight.nvim
-	url = https://github.com/folke/tokyonight.nvim.git
