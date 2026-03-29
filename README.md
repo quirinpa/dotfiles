@@ -1,6 +1,12 @@
-# Neovim Dotfiles
+# Dotfiles
 
-Personal Neovim configuration. Self-contained: plugins are auto-installed on first launch — no plugin manager required.
+This is my dotfiles repo. But I've decided to make it for the purpose of helping a friend get started with vim / neovim more easily. So I'll focus this README on neovim. At the end I'll add little section as a reminder for myself. But you can ignore that, if you wish..
+
+The self-contained Neovim configuration is aimed at getting new users productive fast —
+LSP, completion, Git integration, and AI assistance all working out of the box with no
+plugin manager required. Plugins are installed automatically on first launch.
+
+The config lives in a single file: [`.config/nvim/init.lua`](.config/nvim/init.lua).
 
 ## Contents
 
@@ -16,7 +22,7 @@ Personal Neovim configuration. Self-contained: plugins are auto-installed on fir
 
 ## Installing Neovim
 
-Neovim is hot right now. Versions are coming out quickly. If newer versions are not available in your OS' default repos, you might to do something like this **Ubuntu** example:
+Neovim is hot right now. Versions are coming out quickly. And some of these plugins are not compatible with old versions. This **Ubuntu** example might be handy if you're thinking of using some of the latest neovim versions:
 
 ```bash
 sudo add-apt-repository ppa:neovim-ppa/unstable
@@ -26,7 +32,12 @@ sudo apt install neovim
 
 Refer to the [original docs for other setups](https://github.com/neovim/neovim/blob/master/INSTALL.md).
 
+If you don't use a newer version. That's fine too. You'll get a pretty warning saying some features aren't enabled. That's all.
+
 ## Requirements
+There are no hard requirements except for neovim itself. But as I've hinted, if you don't have some of the soft requirements, things just don't get enabled, and you get a warning.
+
+Here are some of the requirements for different features:
 
 | Tool | Purpose | Min. Version |
 |------|---------|--------------|
@@ -43,52 +54,22 @@ Install `mcp-hub` once for AI/MCP features:
 npm install -g mcp-hub@latest
 ```
 
-**Windows:** install tools via [scoop](https://scoop.sh), [choco](https://chocolatey.org), or [winget](https://github.com/microsoft/winget-cli).
+**Windows:** I recommend [winget](https://github.com/microsoft/winget-cli).
 
 ## Quick Start
 
-Clone as a **bare repo** into `~/.dotfiles.git`, then check out into your home directory.
+Place [`init.lua`](.config/nvim/init.lua) in your Neovim config directory and launch Neovim. Plugins are cloned automatically on first start.
 
-**Linux / macOS / BSD / WSL / Git Bash:**
-
-```bash
-git clone --bare -b main https://github.com/quirinpa/dotfiles.git "$HOME/.dotfiles.git"
-git --git-dir="$HOME/.dotfiles.git" --work-tree="$HOME" checkout
-```
-
-**PowerShell:**
-
-```powershell
-git clone --bare -b main https://github.com/quirinpa/dotfiles.git "$HOME/.dotfiles.git"
-git --git-dir="$HOME/.dotfiles.git" --work-tree="$HOME" checkout
-```
-
-**CMD:**
-
-```cmd
-git clone --bare -b main https://github.com/quirinpa/dotfiles.git "%USERPROFILE%\.dotfiles.git"
-git --git-dir="%USERPROFILE%\.dotfiles.git" --work-tree="%USERPROFILE%" checkout
-```
-
-Optionally suppress untracked files in `$HOME` from Git status:
-
-```bash
-git --git-dir="$HOME/.dotfiles.git" --work-tree="$HOME" config status.showUntrackedFiles no
-```
-
-Launch Neovim. Plugins are cloned automatically on first start.
-
-## Updating
-
-```bash
-git --git-dir="$HOME/.dotfiles.git" --work-tree="$HOME" pull
-```
+| Platform | Path |
+|----------|------|
+| Linux / macOS / BSD | `~/.config/nvim/init.lua` |
+| Windows | `%LOCALAPPDATA%\nvim\init.lua` |
 
 ## Plugin System
 
-There is no external plugin manager. A small `use(repo, opts)` helper in `init.lua` clones plugins from GitHub into Neovim's native packpath (`stdpath("data")/site/pack/me/start/`) on first launch using `git clone --filter=blob:none`. Plugins load automatically via Neovim's built-in package loading.
+There is no external plugin manager. We just add a helper function that clones what we need on boot. It uses vim pack under the hood.
 
-Pinned revisions (`opts.rev`) and post-install build steps (`opts.build`) are supported.
+Pinned revisions (`opts.rev`) and post-install build steps (`opts.build`) are supported. And they are used for version compatibility.
 
 ## Plugins
 
@@ -212,16 +193,6 @@ Copilot suggestions (insert mode):
 
 ## Troubleshooting
 
-### `git checkout` fails during setup
-
-Conflicting files already exist in your home directory. Inspect them:
-
-```bash
-git --git-dir="$HOME/.dotfiles.git" --work-tree="$HOME" checkout 2>&1 | grep "^\s"
-```
-
-Back up or remove the listed files, then run checkout again.
-
 ### LSP does not attach
 
 - Confirm the server binary is in `$PATH` (e.g. `which clangd`, `which deno`).
@@ -237,3 +208,12 @@ Back up or remove the listed files, then run checkout again.
 ### Copilot not working
 
 Run `:Copilot auth` to authenticate with GitHub if you have not done so already.
+
+## Reminder to self - for using the other dotfiles
+
+Clone as a **bare repo** into `~/.dotfiles.git`, then check out into your home directory. This tracks the config in Git alongside any other dotfiles.
+
+```bash
+git clone --bare -b main https://github.com/quirinpa/dotfiles.git "$HOME/.dotfiles.git"
+git --git-dir="$HOME/.dotfiles.git" --work-tree="$HOME" checkout
+```
