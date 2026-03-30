@@ -18,6 +18,8 @@ vim.opt.pumblend = 12
 vim.opt.fileformats = { "unix", "dos" }
 vim.opt.fileformat = "unix"
 
+local USE_COPILOT_COMPLETION = true
+
 -- }}}
 -- self-contained plugin system {{{
 local uv = vim.uv or vim.loop
@@ -291,7 +293,11 @@ local lsp_capabilities = vim.lsp.protocol.make_client_capabilities()
 
 if require_nvim(0, 10, 0, "loading blink") then
   use("Saghen/blink.cmp")
-  use("giuxtaposition/blink-cmp-copilot")
+
+  if USE_COPILOT_COMPLETION then
+    use("giuxtaposition/blink-cmp-copilot")
+  end
+
   blink = req("blink.cmp")
   if blink then
     lsp_capabilities = blink.get_lsp_capabilities()
@@ -304,15 +310,6 @@ end
 local on_attach = function(_, bufnr)
   local function bufmap(mode, lhs, rhs, desc)
     vim.keymap.set(mode, lhs, rhs, { buffer = bufnr, desc = desc })
-  end
-
-  if wk then
-    wk.add({
-      { "<leader>l", group = "lsp", buffer = bufnr },
-      { "<leader>la", desc = "code action", buffer = bufnr, mode = { "n", "x" } },
-      { "<leader>lf", desc = "format", buffer = bufnr },
-      { "<leader>lr", desc = "rename", buffer = bufnr },
-    })
   end
 
   bufmap("n", "gd", vim.lsp.buf.definition, "LSP definition")
@@ -502,16 +499,6 @@ if gitsigns then
         vim.keymap.set(mode, lhs, rhs, { buffer = bufnr, desc = desc })
       end
 
-      if wk then
-        wk.add({
-          { "<leader>g", group = "git", buffer = bufnr },
-          { "<leader>gp", desc = "preview hunk", buffer = bufnr },
-          { "<leader>gs", desc = "stage hunk", buffer = bufnr },
-          { "<leader>gr", desc = "reset hunk", buffer = bufnr },
-          { "<leader>gb", desc = "blame line", buffer = bufnr },
-        })
-      end
-
       bufmap("n", "]c", function()
         if vim.wo.diff then
           vim.cmd.normal({ "]c", bang = true })
@@ -537,113 +524,23 @@ if gitsigns then
 end
 -- }}}
 -- copilot {{{
-if require_nvim(0, 11, 0, "loading copilot") then
+if USE_COPILOT_COMPLETION and require_nvim(0, 11, 0, "loading copilot") then
   use("zbirenbaum/copilot.lua")
 
   local copilot = req("copilot")
   if copilot then
     copilot.setup({
-      panel = {
-        enabled = true,
-        auto_refresh = false,
-        keymap = {
-          jump_prev = "[[",
-          jump_next = "]]",
-          accept = "<CR>",
-          refresh = "gr",
-          open = "<M-CR>",
-        },
-        layout = {
-          position = "bottom",
-          ratio = 0.4,
-        },
-      },
-
       suggestion = {
-        enabled = true,
-        auto_trigger = false,
-        hide_during_completion = true,
-        debounce = 15,
-        trigger_on_accept = true,
-        keymap = {
-          accept = "<M-l>",
-          accept_word = false,
-          accept_line = false,
-          next = "<M-]>",
-          prev = "<M-[>",
-          dismiss = "<C-]>",
-          toggle_auto_trigger = false,
-        },
-      },
-
-      nes = {
         enabled = false,
-        auto_trigger = false,
-        keymap = {
-          accept_and_goto = false,
-          accept = false,
-          dismiss = false,
-        },
       },
-
-      logger = {
-        file = vim.fn.stdpath("log") .. "/copilot-lua.log",
-        file_log_level = vim.log.levels.OFF,
-        print_log_level = vim.log.levels.WARN,
-        trace_lsp = "off",
-        trace_lsp_progress = false,
-        log_lsp_messages = false,
+      panel = {
+        enabled = false,
       },
-
       copilot_node_command = "node",
-
-      root_dir = function()
-        local git = vim.fs.find(".git", { upward = true })[1]
-        return git and vim.fs.dirname(git) or vim.fn.getcwd()
-      end,
-
-      should_attach = function(buf_id, _)
-        if not vim.bo[buf_id].buflisted then
-          return false
-        end
-        if vim.bo[buf_id].buftype ~= "" then
-          return false
-        end
-        return true
-      end,
-
-      server = {
-        type = "nodejs",
-        custom_server_filepath = nil,
-      },
-
-      server_opts_overrides = {},
     })
   end
 end
 
--- }}}
--- mcphub {{{
-local mcp_hub_cmd = require_executable("mcp-hub", "loading mcphub")
-local mcphub = nil
-
-if require_nvim(0, 11, 0, "loading mcphub") and mcp_hub_cmd then
-  use("ravitemer/mcphub.nvim", {
-    build = { "npm", "install", "-g", "mcp-hub@latest" },
-  })
-
-  local mcphub = req("mcphub")
-  if mcphub then
-    mcphub.setup({
-      cmd = mcp_hub_cmd,
-      auto_approve = false,
-    })
-
-    vim.api.nvim_create_user_command("MCP", function()
-      vim.cmd("MCPHub")
-    end, {})
-  end
-end
 -- }}}
 -- codecompanion {{{
 if require_nvim(0, 11, 0, "loading codecompanion") then
@@ -653,28 +550,10 @@ if require_nvim(0, 11, 0, "loading codecompanion") then
   if codecompanion then
     local extensions = {}
 
-    if mcphub ~= nil then
-      extensions.mcphub = {
-        callback = "mcphub.extensions.codecompanion",
-        opts = {
-          make_tools = true,
-          show_server_tools_in_chat = true,
-          add_mcp_prefix_to_tool_names = false,
-          show_result_in_chat = true,
-          format_tool = nil,
-          make_vars = true,
-          make_slash_commands = true,
-        },
-      }
-    end
-
     codecompanion.setup({
-      extensions = extensions,
-
       interactions = {
-        chat = { adapter = "copilot", variables = {} },
-        inline = { adapter = "copilot" },
-
+        chat = { adapter = "opencode", variables = {} },
+        inline = { adapter = "copilot" }, -- only if you want inline HTTP adapter behavior
         cli = {
           agent = "opencode",
           agents = {
@@ -686,18 +565,6 @@ if require_nvim(0, 11, 0, "loading codecompanion") then
             },
           },
         },
-      },
-
-      tools = {
-        default_tools = { "agent" },
-      },
-
-      display = {
-        action_palette = { provider = "default" },
-      },
-
-      opts = {
-        log_level = "debug",
       },
     })
 
@@ -718,61 +585,29 @@ end
 -- blink.cmp {{{
 
 if blink then
+  local sources = { "lsp", "path", "snippets", "buffer" }
+  local providers = {}
+
+  if USE_COPILOT_COMPLETION then
+    table.insert(sources, "copilot")
+    providers.copilot = {
+      name = "copilot",
+      module = "blink-cmp-copilot",
+      score_offset = 100,
+      async = true,
+    }
+  end
+
   blink.setup({
     sources = {
-      default = { "lsp", "path", "snippets", "buffer", "copilot" },
-      providers = {
-        copilot = {
-          name = "copilot",
-          module = "blink-cmp-copilot",
-          score_offset = 100,
-          async = true,
-        },
-      },
+      default = sources,
+      providers = providers,
     },
-
     fuzzy = {
       implementation = "lua",
     },
-
-    completion = {
-      ghost_text = { enabled = true },
-      documentation = {
-        auto_show = true,
-        auto_show_delay_ms = 200,
-        update_delay_ms = 50,
-        treesitter_highlighting = true,
-        window = {
-          border = "rounded",
-          winblend = 12,
-          scrollbar = true,
-          max_width = 90,
-          max_height = 20,
-        },
-      },
-      menu = {
-        border = "rounded",
-        winblend = 12,
-        draw = {
-          columns = {
-            { "label", "label_description", gap = 1 },
-            { "kind" },
-          },
-        },
-      },
-    },
-
-    signature = {
-      enabled = true,
-      window = {
-        border = "rounded",
-        winblend = 12,
-        show_documentation = true,
-      },
-    },
   })
 end
-
 -- }}}
 -- toggleterm {{{
 use("akinsho/toggleterm.nvim")
