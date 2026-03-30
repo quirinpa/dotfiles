@@ -19,7 +19,6 @@ vim.opt.fileformats = { "unix", "dos" }
 vim.opt.fileformat = "unix"
 
 local USE_COPILOT_COMPLETION = true
-local USE_TELESCOPE = true
 
 -- }}}
 -- self-contained plugin system {{{
@@ -446,7 +445,7 @@ end
 -- }}}
 -- }}}
 -- find and grep {{{
-vim.opt.path = { ".", "**" }
+vim.opt.path = { ".", "src/**", "mods/**" }
 
 if vim.fn.executable("rg") == 1 then
   vim.opt.grepprg = "rg --vimgrep --smart-case"
@@ -455,76 +454,46 @@ else
   notify("ripgrep not found in PATH", vim.log.levels.WARN)
 end
 
--- telescope {{{
-if USE_TELESCOPE and require_nvim(0, 9, 0, "loading telescope") then
-  use("nvim-lua/plenary.nvim")
+vim.opt.wildignore:append({ "*/.git/*", "*/node_modules/*" })
 
-  local telescope_spec = has_nvim(0, 10, 4) and {} or { rev = "0.1.9" }
-  use("nvim-telescope/telescope.nvim", telescope_spec)
+vim.keymap.set("n", "<leader>ff", ":find ", { desc = "Find files" })
 
-  local telescope = req("telescope")
-  if telescope then
-    telescope.setup({
-      -- minimal defaults (you can expand later if you want)
-      defaults = {
-        mappings = {
-          i = {
-            ["<C-j>"] = "move_selection_next",
-            ["<C-k>"] = "move_selection_previous",
-          },
-        },
-      },
-    })
+if vim.fn.executable("rg") == 1 then
+  vim.opt.grepprg = "rg --vimgrep --smart-case -g '!.git' -g '!node_modules'"
+  vim.opt.grepformat = "%f:%l:%c:%m"
 
-    local builtin = req("telescope.builtin")
-    if builtin then
-      nmap("<leader>ff", builtin.find_files, "Find files")
-      nmap("<leader>fg", builtin.live_grep,  "Live grep")
-      nmap("<leader>fb", builtin.buffers,    "Buffers")
-      nmap("<leader>fh", builtin.help_tags,  "Help tags")
+  nmap("<leader>fg", function()
+    local pat = vim.fn.input("Grep > ")
+    if pat == "" then
+      return
     end
-  end
+    vim.cmd("grep! " .. vim.fn.shellescape(pat))
+    vim.cmd("copen")
+  end, "Grep files")
 else
-  vim.keymap.set("n", "<leader>ff", ":find ", { desc = "Find files" })
-
-  if vim.fn.executable("rg") == 1 then
-    vim.opt.grepprg = "rg --vimgrep --smart-case"
-    vim.opt.grepformat = "%f:%l:%c:%m"
-
-    nmap("<leader>fg", function()
-      local pat = vim.fn.input("Grep > ")
-      if pat == "" then
-        return
-      end
-      vim.cmd("grep! " .. vim.fn.shellescape(pat))
-      vim.cmd("copen")
-    end, "Grep files")
-  else
-    nmap("<leader>fg", function()
-      local pat = vim.fn.input("Grep > ")
-      if pat == "" then
-        return
-      end
-      vim.cmd("silent vimgrep /" .. vim.fn.escape(pat, "/\\") .. "/gj **/*")
-      vim.cmd("copen")
-    end, "Grep files")
-  end
-
-  nmap("<leader>fb", function()
-    local buffers = vim.fn.getbufinfo({ buflisted = 1 })
-    vim.ui.select(buffers, {
-      prompt = "Buffers",
-      format_item = function(buf)
-        return string.format("%d: %s", buf.bufnr, buf.name ~= "" and buf.name or "[No Name]")
-      end,
-    }, function(choice)
-      if choice then
-        vim.cmd("buffer " .. choice.bufnr)
-      end
-    end)
-  end, "Buffers")
+  nmap("<leader>fg", function()
+    local pat = vim.fn.input("Grep > ")
+    if pat == "" then
+      return
+    end
+    vim.cmd("silent vimgrep /" .. vim.fn.escape(pat, "/\\") .. "/gj **/*")
+    vim.cmd("copen")
+  end, "Grep files")
 end
--- }}}
+
+nmap("<leader>fb", function()
+  local buffers = vim.fn.getbufinfo({ buflisted = 1 })
+  vim.ui.select(buffers, {
+    prompt = "Buffers",
+    format_item = function(buf)
+      return string.format("%d: %s", buf.bufnr, buf.name ~= "" and buf.name or "[No Name]")
+    end,
+  }, function(choice)
+    if choice then
+      vim.cmd("buffer " .. choice.bufnr)
+    end
+  end)
+end, "Buffers")
 
 -- }}}
 -- gitsigns {{{
