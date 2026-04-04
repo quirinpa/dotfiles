@@ -19,6 +19,7 @@ vim.opt.fileformats = { "unix", "dos" }
 vim.opt.fileformat = "unix"
 
 local USE_COPILOT_COMPLETION = true
+local USE_TELESCOPE = false
 
 -- }}}
 -- self-contained plugin system {{{
