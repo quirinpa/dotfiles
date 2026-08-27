@@ -4,6 +4,12 @@
 vim.opt.clipboard = "unnamedplus"
 vim.o.autoread = true
 
+-- Auto-reload buffers when modified externally (e.g. by Pi coding agent)
+vim.api.nvim_create_autocmd({ "FocusGained", "BufEnter", "CursorHold", "CursorHoldI" }, {
+  command = "if mode() != 'c' | checktime | endif",
+  pattern = "*",
+})
+
 vim.opt.autoindent = true
 vim.opt.smartindent = true
 vim.opt.expandtab = true
@@ -19,7 +25,6 @@ vim.opt.fileformats = { "unix", "dos" }
 vim.opt.fileformat = "unix"
 
 local USE_COPILOT_COMPLETION = true
-local USE_TELESCOPE = false
 
 -- }}}
 -- self-contained plugin system {{{
@@ -207,7 +212,7 @@ if wk then
       { "<leader>f", group = "find" },
       { "<leader>g", group = "git" },
       { "<leader>l", group = "lsp" },
-      { "<leader>a", group = "ai" },
+      { "<leader>a", group = "ai (pi)" },
 
       { "<leader>e", desc = "line diagnostics" },
 
@@ -216,12 +221,11 @@ if wk then
       { "<leader>fb", desc = "buffers" },
       { "<leader>fh", desc = "help tags" },
 
-      { "<leader>ac", desc = "chat" },
-      { "<leader>aa", desc = "actions" },
-      { "<leader>ai", desc = "inline" },
-      { "<leader>ae", desc = "explain selection", mode = "v" },
-      { "<leader>af", desc = "fix selection", mode = "v" },
-      { "<leader>at", desc = "test selection", mode = "v" },
+      { "<leader>ao", desc = "open pi agent" },
+      { "<leader>ap", desc = "send file/selection to pi" },
+
+      { "g", group = "goto" },
+      { "gr", group = "lsp" },
     },
   })
 end
@@ -246,6 +250,7 @@ if ts then
       "tsx",
       "c",
       "cpp",
+      "rust"
     },
     highlight = {
       enable = true,
@@ -320,13 +325,10 @@ vim.api.nvim_create_autocmd("LspAttach", {
   callback = function(args)
     local bufnr = args.buf
 
-    lsp_bufmap(bufnr, "n", "gd", vim.lsp.buf.definition, "LSP definition")
-    lsp_bufmap(bufnr, "n", "gD", vim.lsp.buf.declaration, "LSP declaration")
-    lsp_bufmap(bufnr, "n", "gi", vim.lsp.buf.implementation, "LSP implementation")
-    lsp_bufmap(bufnr, "n", "gr", vim.lsp.buf.references, "LSP references")
-    lsp_bufmap(bufnr, "n", "K", vim.lsp.buf.hover, "LSP hover")
-    lsp_bufmap(bufnr, "n", "<leader>lr", vim.lsp.buf.rename, "LSP rename")
-    lsp_bufmap(bufnr, { "n", "x" }, "<leader>la", vim.lsp.buf.code_action, "LSP code action")
+    -- lsp_bufmap(bufnr, "n", "gd", vim.lsp.buf.definition, "LSP definition")
+    -- lsp_bufmap(bufnr, "n", "gD", vim.lsp.buf.declaration, "LSP declaration")
+    -- lsp_bufmap(bufnr, "n", "gi", vim.lsp.buf.implementation, "LSP implementation")
+    -- lsp_bufmap(bufnr, "n", "K", vim.lsp.buf.hover, "LSP hover")
     lsp_bufmap(bufnr, "n", "<leader>lf", function()
       vim.lsp.buf.format({ async = true })
     end, "LSP format")
@@ -338,6 +340,7 @@ nmap("<leader>e", vim.diagnostic.open_float, "Line diagnostics")
 local ts_ls_cmd = first_executable("typescript-language-server")
 local deno_cmd = first_executable("deno")
 local clangd_cmd = first_executable("clangd")
+local rust_analyzer_cmd = first_executable("rust-analyzer")
 -- }}}
 -- lsp compat helper {{{
 local lspconfig_spec = has_nvim(0, 10, 0) and {} or { rev = "v0.1.8" }
@@ -443,18 +446,64 @@ else
   notify("clangd not enabled: missing clangd", vim.log.levels.WARN)
 end
 -- }}}
+-- rust {{{
+if rust_analyzer_cmd then
+  setup_lsp("rust_analyzer", {
+    cmd = { rust_analyzer_cmd },
+    filetypes = { "rust" },
+    root_dir = function(bufnr, on_dir)
+      local root = vim.fs.root(bufnr, { "Cargo.toml", "rust-project.json" })
+      if root then
+        if has_new_lsp then
+          on_dir(root)
+        else
+          return root
+        end
+      end
+    end,
+    capabilities = lsp_capabilities,
+    settings = {
+      ["rust-analyzer"] = {
+        checkOnSave = {
+          command = "clippy",
+        },
+      },
+    },
+  })
+else
+  notify("rust_analyzer not enabled: missing rust-analyzer", vim.log.levels.WARN)
+end
 -- }}}
+-- }}}
+-- }}}
+-- rust-tools {{{
+local rust_tools_spec = has_nvim(0, 10, 0) and {} or { rev = "v3.0.0" }
+use("simrat39/rust-tools.nvim", rust_tools_spec)
+
+local rust_tools = req("rust-tools")
+if rust_tools and rust_analyzer_cmd then
+  rust_tools.setup({
+    server = {
+      capabilities = lsp_capabilities,
+      settings = {
+        ["rust-analyzer"] = {
+          checkOnSave = true,
+        },
+      },
+    },
+    tools = {
+      inlay_hints = {
+        auto = true,
+        show_parameter_hints = true,
+        show_variable_name = true,
+        show_type_hints = true,
+      },
+    },
+  })
+end
 -- }}}
 -- find and grep {{{
 vim.opt.path = { ".", "src/**", "mods/**" }
-
-if vim.fn.executable("rg") == 1 then
-  vim.opt.grepprg = "rg --vimgrep --smart-case"
-  vim.opt.grepformat = "%f:%l:%c:%m"
-else
-  notify("ripgrep not found in PATH", vim.log.levels.WARN)
-end
-
 vim.opt.wildignore:append({ "*/.git/*", "*/node_modules/*" })
 
 vim.keymap.set("n", "<leader>ff", ":find ", { desc = "Find files" })
@@ -499,6 +548,7 @@ end, "Buffers")
 -- }}}
 -- gitsigns {{{
 local gitsigns_spec = has_nvim(0, 10, 0) and {} or { rev = "v1.0.2" }
+use("tpope/vim-fugitive")
 use("lewis6991/gitsigns.nvim", gitsigns_spec)
 
 local gitsigns = req("gitsigns")
@@ -554,45 +604,30 @@ if USE_COPILOT_COMPLETION and require_nvim(0, 11, 0, "loading copilot") then
 end
 
 -- }}}
--- codecompanion {{{
-if require_nvim(0, 11, 0, "loading codecompanion") then
-  use("nvim-lua/plenary.nvim")
-  use("olimorris/codecompanion.nvim")
-  local codecompanion = req("codecompanion")
-  if codecompanion then
-    local extensions = {}
+-- pi.nvim {{{
+use("folke/snacks.nvim")
+use("bamggm/pi.nvim")
 
-    codecompanion.setup({
-      interactions = {
-        chat = { adapter = "opencode", variables = {} },
-        inline = { adapter = "copilot" }, -- only if you want inline HTTP adapter behavior
-        cli = {
-          agent = "opencode",
-          agents = {
-            opencode = {
-              cmd = "opencode",
-              args = {},
-              description = "opencode cli",
-              provider = "terminal",
-            },
-          },
-        },
+local pi_nvim = req("pi")
+if pi_nvim then
+  pi_nvim.setup({
+    command = "pi",
+    focus_on_sel = true,
+    terminal = {
+      interactive = true,
+      win = {
+        position = "right",
+        width = 0.40,
+        height = 0,
+        relative = "editor",
       },
-    })
+    },
+  })
 
-    map("n", "<leader>ac", "<cmd>CodeCompanionChat<cr>", { desc = "AI chat" })
-    map("n", "<leader>aa", "<cmd>CodeCompanionActions<cr>", { desc = "AI actions" })
-    map("n", "<leader>ax", "<cmd>CodeCompanionCLI<cr>", { desc = "AI CLI" })
-
-    map("v", "<leader>ai", ":CodeCompanion ", { desc = "AI Selection" })
-    map("n", "<leader>ai", ":CodeCompanion ", { desc = "AI Command" })
-
-    map("v", "<leader>ae", ":CodeCompanion explain<CR>", { desc = "AI explain selection" })
-    map("v", "<leader>af", ":CodeCompanion fix<CR>", { desc = "AI fix selection" })
-    map("v", "<leader>at", ":CodeCompanion test<CR>", { desc = "AI test selection" })
+  map("n", "<leader>ao", "<cmd>PiOpen<CR>", { desc = "Open Pi Agent" })
+  map("n", "<leader>ap", "<cmd>PiSendFile<CR>", { desc = "Send file to Pi Agent" })
+  map("v", "<leader>ap", "<cmd>PiSendSel<CR>", { desc = "Send selection to Pi Agent" })
 end
-end
-
 -- }}}
 -- blink.cmp {{{
 
